@@ -240,6 +240,11 @@ CREATE OR REPLACE FUNCTION pcpatch_in(cstring)
 	RETURNS pcpatch AS 'MODULE_PATHNAME', 'pcpatch_in'
 	LANGUAGE 'c' IMMUTABLE STRICT;
 
+
+CREATE OR REPLACE FUNCTION pcpatch_in_internal(internal)
+	RETURNS pcpatch AS 'MODULE_PATHNAME', 'pcpatch_in_internal'
+	LANGUAGE 'c' IMMUTABLE STRICT;
+
 CREATE OR REPLACE FUNCTION pcpatch_out(pcpatch)
 	RETURNS cstring AS 'MODULE_PATHNAME', 'pcpatch_out'
 	LANGUAGE 'c' IMMUTABLE STRICT;
@@ -249,7 +254,7 @@ CREATE TYPE pcpatch (
 	input = pcpatch_in,
 	output = pcpatch_out,
 	-- send = geometry_send,
-	-- receive = geometry_recv,
+	receive = pcpatch_in_internal,
 	typmod_in = pc_typmod_in,
 	typmod_out = pc_typmod_out,
 	-- delimiter = ':',

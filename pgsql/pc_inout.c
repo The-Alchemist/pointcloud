@@ -137,6 +137,51 @@ PG_FUNCTION_INFO_V1(pcpatch_in);
 Datum pcpatch_in(PG_FUNCTION_ARGS)
 {
 	char *str = PG_GETARG_CSTRING(0);
+
+	/* Datum geog_oid = PG_GETARG_OID(1); Not needed. */
+	uint32 typmod = 0, pcid = 0;
+	PCPATCH *patch;
+	SERIALIZED_PATCH *serpatch = NULL;
+
+	if ( (PG_NARGS()>2) && (!PG_ARGISNULL(2)) )
+	{
+		typmod = PG_GETARG_INT32(2);
+		pcid = pcid_from_typmod(typmod);
+	}
+
+	/* Empty string. */
+	if ( str[0] == '\0' )
+	{
+		ereport(ERROR,(errmsg("pcpatch parse error - empty string")));
+	}
+
+	/* Binary or text form? Let's find out. */
+	if ( str[0] == '0' )
+	{
+		/* Hex-encoded binary */
+		patch = pc_patch_from_hexwkb(str, strlen(str), fcinfo);
+		pcid_consistent(patch->schema->pcid, pcid);
+		serpatch = pc_patch_serialize(patch, NULL);
+		pc_patch_free(patch);
+	}
+	else
+	{
+		ereport(ERROR,(errmsg("parse error - support for text format not yet implemented")));
+	}
+
+	if ( serpatch ) PG_RETURN_POINTER(serpatch);
+	else PG_RETURN_NULL();
+}
+
+
+PG_FUNCTION_INFO_V1(pcpatch_in_internal);
+Datum pcpatch_in_internal(PG_FUNCTION_ARGS)
+{
+	StringInfo buf = (StringInfo) PG_GETARG_POINTER(0);
+	char	   *str;
+
+	str = pq_getmsgstring(buf);
+
 	/* Datum geog_oid = PG_GETARG_OID(1); Not needed. */
 	uint32 typmod = 0, pcid = 0;
 	PCPATCH *patch;
